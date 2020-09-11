@@ -8,7 +8,10 @@
 package qlearning
 
 import (
+	"encoding/gob"
 	"fmt"
+	"io"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -79,7 +82,7 @@ func NewStateAction(state State, action Action, val float32) *StateAction {
 //
 // In the case of Q-value ties for a set of actions, a random
 // value is selected.
-func Next(agent Agent, state State) *StateAction {
+func Next(agent Agent, state State, epsilon float32) *StateAction {
 	best := make([]*StateAction, 0)
 	bestVal := float32(0.0)
 
@@ -98,8 +101,10 @@ func Next(agent Agent, state State) *StateAction {
 			}
 		}
 	}
-
-	return best[rand.Intn(len(best))]
+	if rand.Float32() < epsilon {
+		return best[rand.Intn(len(best))]
+	}
+	return best[len(best)-1]
 }
 
 // SimpleAgent is an Agent implementation that stores Q-values in a
@@ -160,6 +165,18 @@ func (agent *SimpleAgent) Value(state State, action Action) float32 {
 // BUG (ecooper): This is useless.
 func (agent *SimpleAgent) String() string {
 	return fmt.Sprintf("%v", agent.q)
+}
+func (agent *SimpleAgent) Export(w io.Writer) {
+	if err := gob.NewEncoder(w).Encode(agent.q); err != nil {
+		log.Println(err)
+	}
+}
+func (agent *SimpleAgent) Import(r io.Reader) {
+	if err := gob.NewDecoder(r).Decode(&agent.q); err != nil {
+		log.Println(err)
+	}
+	fmt.Printf("data len is %+v\r\n", len(agent.q))
+	return
 }
 
 func init() {

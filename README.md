@@ -10,6 +10,8 @@ bot](https://github.com/chncyhn/flappybird-qlearning-bot).
 *Until a release is tagged, qlearning should be considered highly
 experimental and mostly a fun toy.*
 
+Some refactor, add ability for store q-table to file add ability for not only randomly select next action.
+Add another example, resolving nqueen problem(with some reservations)
 ## Installation
 
 ```shell

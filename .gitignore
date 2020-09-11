@@ -22,3 +22,6 @@ _testmain.go
 *.exe
 *.test
 *.prof
+examples/nqueens/qtable.json
+examples/hangman/qtable.json
+.idea

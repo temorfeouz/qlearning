@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ecooper/qlearning"
+	"github.com/temorfeouz/qlearning"
 )
 
 // Choice implements qlearning.Action for a character choice in a game

@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/ecooper/qlearning"
+	"github.com/temorfeouz/qlearning"
 )
 
 const (

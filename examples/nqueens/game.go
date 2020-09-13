@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ecooper/qlearning"
+	"github.com/temorfeouz/qlearning"
 )
 
 // Game represents the state of any given game of Hangman. It implements

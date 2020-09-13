@@ -15,7 +15,7 @@ Add another example, resolving nqueen problem(with some reservations)
 ## Installation
 
 ```shell
-$ go get https://github.com/ecooper/qlearning
+$ go get https://github.com/temorfeouz/qlearning
 ```
 
 ## Quickstart
@@ -28,7 +28,7 @@ directory of the project.
 qlearning.
 
 ```shell
-$ cd $GOPATH/src/github.com/ecooper/qlearning/examples
+$ cd $GOPATH/src/github.com/temorfeouz/qlearning/examples
 $ go run hangman.go -h
 Usage of hangman:
   -debug
@@ -70,5 +70,5 @@ hangman against a 100-word vocabulary.
 
 ## Usage
 
-See [godocs](https://godoc.org/github.com/ecooper/qlearning) for the
+See [godocs](https://godoc.org/github.com/temorfeouz/qlearning) for the
 package documentation.

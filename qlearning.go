@@ -3,7 +3,7 @@
 //
 // This is highly experimental and should be considered a toy.
 //
-// See https://github.com/ecooper/qlearning/tree/master/examples for
+// See https://github.com/temorfeouz/qlearning/tree/master/examples for
 // implementation examples.
 package qlearning
 
@@ -32,7 +32,7 @@ type State interface {
 // Action is an interface wrapping an action that can be applied to the
 // model's current state.
 //
-// BUG (ecooper): A state should apply an action, not the other way
+// BUG (temorfeouz): A state should apply an action, not the other way
 // around.
 type Action interface {
 	String() string
@@ -162,7 +162,7 @@ func (agent *SimpleAgent) Value(state State, action Action) float32 {
 
 // String returns the current Q-value map as a printed string.
 //
-// BUG (ecooper): This is useless.
+// BUG (temorfeouz): This is useless.
 func (agent *SimpleAgent) String() string {
 	return fmt.Sprintf("%v", agent.q)
 }

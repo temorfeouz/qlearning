@@ -1,5 +1,5 @@
 // An example implementation the qlearning interfaces. Can be run
-// with go run hangman.go.
+// with go run main.go.
 //
 // Word list provided by https://github.com/first20hours/google-10000-english
 package main
@@ -262,7 +262,7 @@ func main() {
 		// our agent and learn from its choices.
 		for game.IsComplete() == 0 {
 			// Pick the next move, which is going to be a letter choice.
-			action := qlearning.Next(agent, game)
+			action := qlearning.Next(agent, game, 0.1)
 
 			// Whatever that choice is, let's update our model for its
 			// impact. If the character chosen is in the game's word,

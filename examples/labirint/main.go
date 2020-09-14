@@ -60,28 +60,30 @@ func train() {
 		refere       = NewRefere(steps)
 		wins, looses int
 	)
-	for round = 1; round < rounds; round++ {
+	for round = 1; round <= rounds; round++ {
 		gm := newGame(lv, true, round)
 		refere.Reset()
 
 		done := false
 		for {
-			action := qlearning.Next(agent, gm, 0.1)
+			refere.Inc()
+
+			action := qlearning.Next(agent, gm, 0.2)
 			agent.Learn(action, refere)
-			gm.Draw()
+			//gm.Draw()
 			win, st := gm.Stat()
 			if win {
 				wins++
 				done = true
 			}
-			if st > steps {
+			if st >= steps {
 				looses++
 				done = true
 			}
 
 			gm.l("WINS:%d,LOOSE:%d, REW:%v", wins, looses, refere.Reward(action))
-
-			time.Sleep(10 * time.Millisecond)
+			gm.Draw()
+			time.Sleep(50 * time.Millisecond)
 			if done {
 				break
 			}

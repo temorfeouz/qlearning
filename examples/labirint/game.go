@@ -200,7 +200,8 @@ func (r *Refere) Reset() {
 // Reward calculate effectivity of choosed steps
 func (r *Refere) Reward(action *qlearning.StateAction) float32 {
 	if strings.Contains(action.State.String(), blokWIN.String()) {
-		return float32(r.baseScore) * 10.
+		return 0
+		//return float32(r.baseScore) * 10.
 	}
 
 	tmp := strings.Split(action.State.String(), "~")

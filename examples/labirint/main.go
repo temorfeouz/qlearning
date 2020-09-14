@@ -1,8 +1,13 @@
 package main
 
 import (
+	"flag"
+	"log"
 	"os"
 	"os/exec"
+	"time"
+
+	"github.com/temorfeouz/qlearning"
 )
 
 var lv = [][]gameBlock{
@@ -18,8 +23,85 @@ var lv = [][]gameBlock{
 	{wallBot, wallBot, wallBot, wallBot, wallBot, wallBot, wallBot, wallBot, wallBot, wallBot},
 }
 
+const qtableFile = "qtable.json"
+
+var (
+	autoplay bool = true
+	steps    int  = 50
+	rounds   int  = 100
+)
+
+func init() {
+	flag.BoolVar(&autoplay, "autoplay", autoplay, "train")
+	flag.IntVar(&steps, "steps", steps, "steps per round")
+	flag.IntVar(&rounds, "rounds", rounds, "count of rounds")
+	flag.Parse()
+}
+
 func main() {
-	gm := newGame(lv, true)
+	if !autoplay {
+		playByHangs()
+	} else {
+		train()
+	}
+}
+func train() {
+	agent := qlearning.NewSimpleAgent(0.7, 1.0)
+
+	f, err := os.OpenFile(qtableFile, os.O_CREATE|os.O_RDONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	agent.Import(f)
+	f.Close()
+
+	var (
+		round        int
+		refere       = NewRefere(steps)
+		wins, looses int
+	)
+	for round = 1; round < rounds; round++ {
+		gm := newGame(lv, true, round)
+		refere.Reset()
+
+		done := false
+		for {
+			action := qlearning.Next(agent, gm, 0.1)
+			agent.Learn(action, refere)
+			gm.Draw()
+			win, st := gm.Stat()
+			if win {
+				wins++
+				done = true
+			}
+			if st > steps {
+				looses++
+				done = true
+			}
+
+			gm.l("WINS:%d,LOOSE:%d, REW:%v", wins, looses, refere.Reward(action))
+
+			time.Sleep(10 * time.Millisecond)
+			if done {
+				break
+			}
+		}
+	}
+
+	f, err = os.OpenFile("qtable.json", os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			panic(err)
+		}
+	}()
+	agent.Export(f)
+}
+
+func playByHangs() {
+	gm := newGame(lv, true, 1)
 
 	gm.Draw()
 
@@ -31,7 +113,6 @@ func main() {
 	var b = make([]byte, 1)
 	for {
 		os.Stdin.Read(b)
-		//fmt.Println("I got the byte", b, "("+string(b)+")")
 		if b[0] == 97 {
 			gm.l("move left")
 			gm.Move(left)
@@ -48,47 +129,11 @@ func main() {
 			gm.l("move bottom")
 			gm.Move(bottom)
 		}
-
+		gm.LookAround()
 		if isWin, steps := gm.Stat(); isWin {
 			gm.l("WIN IN %d steps", steps)
 		}
 
 		gm.Draw()
-
 	}
-	// before entering the loop
-	//fmt.Print("\033[s") // save the cursor position
-	//fmt.Println("..")
-	//i := 0
-
-	//sigs := make(chan os.Signal, 1)
-	//done := make(chan bool, 1)
-	//signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	//for true {
-	//	i++
-	//	fmt.Print("\033[u\033[K") // restore the cursor position and clear the line
-	//
-	//	fmt.Print("\033[A") // move the cursor up
-	//	fmt.Printf("Retrieved %d\n", i)
-	//	time.Sleep(time.Second)
-	//
-	//}
-	//<-done
-	//fmt.Println("EXIT")
-}
-
-type gamerable interface {
-	Draw()
-}
-
-func loop(gm gamerable, control chan control) {
-	// process control
-	for {
-		select {
-		//case :
-
-		}
-		// draw level
-	}
-
 }

@@ -73,3 +73,7 @@ var (
 		y: 0,
 	}
 )
+
+func (b *gameBlock) String() string {
+	return b.symbol
+}

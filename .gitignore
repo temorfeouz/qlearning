@@ -24,6 +24,8 @@ _testmain.go
 *.prof
 examples/nqueens/qtable.json
 examples/hangman/qtable.json
+examples/labirint/qtable.json
 examples/nqueens/nqueens
 examples/hangman/hangman
+examples/labirint/labirint
 .idea

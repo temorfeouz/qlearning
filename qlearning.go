@@ -8,7 +8,7 @@
 package qlearning
 
 import (
-	"encoding/gob"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -167,12 +167,12 @@ func (agent *SimpleAgent) String() string {
 	return fmt.Sprintf("%v", agent.q)
 }
 func (agent *SimpleAgent) Export(w io.Writer) {
-	if err := gob.NewEncoder(w).Encode(agent.q); err != nil {
+	if err := json.NewEncoder(w).Encode(agent.q); err != nil {
 		log.Println(err)
 	}
 }
 func (agent *SimpleAgent) Import(r io.Reader) {
-	if err := gob.NewDecoder(r).Decode(&agent.q); err != nil {
+	if err := json.NewDecoder(r).Decode(&agent.q); err != nil {
 		log.Println(err)
 	}
 	fmt.Printf("data len is %+v\r\n", len(agent.q))

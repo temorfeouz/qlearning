@@ -19,7 +19,9 @@ type game struct {
 	WINX, WINY       int
 	debug            bool
 	logBuf           strings.Builder
-	moveHistory      []gameBlock
+
+	steps       int
+	moveHistory []gameBlock
 }
 
 func newGame(level [][]gameBlock, debug bool, round int) *game {
@@ -63,7 +65,7 @@ func (gm *game) Draw() {
 	}
 
 	fmt.Print("\033[u\033[K")
-	log.Printf("[%d/%d] %s", gm.round, len(gm.moveHistory), gm.logBuf.String())
+	log.Printf("[%d/%d] %s", gm.round, gm.steps, gm.logBuf.String())
 	gm.logBuf.Reset()
 	fmt.Print(strings.Repeat("\033[A", len(gm.level)+1)) // move the cursor up
 }
@@ -124,10 +126,10 @@ func (gm *game) Next() []qlearning.Action {
 }
 
 func (gm *game) Stat() (bool, int) {
-	return gm.win, len(gm.moveHistory)
+	return gm.win, gm.steps
 }
 func (gm *game) Move(control control) {
-	gm.moveHistory = append(gm.moveHistory, gm.getBlockFromPlayer(control))
+	gm.steps++
 
 	newx := gm.playerX + control.x
 	newy := gm.playerY + control.y
@@ -140,12 +142,15 @@ func (gm *game) Move(control control) {
 		gm.l("cant move in that direction(y)")
 		return
 	}
-
+	gm.l("move %s", string(control.dir))
 	// check collider
 	if !gm.level[newx][newy].canGoThought {
 		gm.l("cant move thought, %T", gm.level[newx][newy])
 		return
-	} else if gm.level[newx][newy].isWin {
+	}
+
+	gm.moveHistory = append(gm.moveHistory, gm.getBlockFromPlayer(control))
+	if gm.level[newx][newy].isWin {
 		gm.win = true
 	}
 
@@ -182,7 +187,7 @@ func (gm *game) LookAround() whatISee {
 }
 
 type Refere struct {
-	baseScore float64
+	baseScore float32
 	stepLimit int
 	counter   int
 }
@@ -199,8 +204,16 @@ func (r *Refere) Reset() {
 
 // Reward calculate effectivity of choosed steps
 func (r *Refere) Reward(action *qlearning.StateAction) float32 {
+	modifier := float32(1.0)
+	if st, ok := action.Action.(*Step); ok {
+		if !st.BlockAtStep.canGoThought {
+			return r.baseScore * -1.0
+			//modifier = modifier * float32(-1)
+		}
+
+	}
 	if strings.Contains(action.State.String(), blokWIN.String()) {
-		return 0
+		return 10000
 		//return float32(r.baseScore) * 10.
 	}
 
@@ -211,8 +224,8 @@ func (r *Refere) Reward(action *qlearning.StateAction) float32 {
 		panic(err)
 	}
 	if r.counter >= r.stepLimit {
-		return float32(r.baseScore * -1.0)
+		return r.baseScore * -1.0
 	}
 
-	return float32(r.baseScore*dist) / float32(len(tmp)-1)
+	return r.baseScore * float32(dist) / (float32(r.counter) * modifier)
 }

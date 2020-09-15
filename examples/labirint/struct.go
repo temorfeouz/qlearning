@@ -50,27 +50,32 @@ type (
 		canGoThought bool
 	}
 	control struct {
-		x int
-		y int
+		x   int
+		y   int
+		dir rune
 	}
 )
 
 var (
 	left = control{
-		x: 0,
-		y: -1,
+		dir: '←',
+		x:   0,
+		y:   -1,
 	}
 	right = control{
-		x: 0,
-		y: 1,
+		dir: '→',
+		x:   0,
+		y:   1,
 	}
 	top = control{
-		x: -1,
-		y: 0,
+		dir: '↑',
+		x:   -1,
+		y:   0,
 	}
 	bottom = control{
-		x: 1,
-		y: 0,
+		dir: '↓',
+		x:   1,
+		y:   0,
 	}
 )
 

@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"time"
 
 	"github.com/temorfeouz/qlearning"
 )
@@ -27,8 +26,8 @@ const qtableFile = "qtable.json"
 
 var (
 	autoplay bool = true
-	steps    int  = 50
-	rounds   int  = 100
+	steps    int  = 100
+	rounds   int  = 10000
 )
 
 func init() {
@@ -68,7 +67,7 @@ func train() {
 		for {
 			refere.Inc()
 
-			action := qlearning.Next(agent, gm, 0.2)
+			action := qlearning.Next(agent, gm, 0.5)
 			agent.Learn(action, refere)
 			//gm.Draw()
 			win, st := gm.Stat()
@@ -83,7 +82,7 @@ func train() {
 
 			gm.l("WINS:%d,LOOSE:%d, REW:%v", wins, looses, refere.Reward(action))
 			gm.Draw()
-			time.Sleep(50 * time.Millisecond)
+			//time.Sleep(50 * time.Millisecond)
 			if done {
 				break
 			}

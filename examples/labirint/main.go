@@ -5,6 +5,10 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
+	"time"
+
+	"go.uber.org/atomic"
 
 	"github.com/temorfeouz/qlearning"
 )
@@ -28,12 +32,14 @@ var (
 	autoplay bool = true
 	steps    int  = 100
 	rounds   int  = 10000
+	threads       = runtime.NumCPU() * 2
 )
 
 func init() {
 	flag.BoolVar(&autoplay, "autoplay", autoplay, "train")
 	flag.IntVar(&steps, "steps", steps, "steps per round")
 	flag.IntVar(&rounds, "rounds", rounds, "count of rounds")
+	flag.IntVar(&threads, "threads", threads, "count of parallel games")
 	flag.Parse()
 }
 
@@ -45,7 +51,7 @@ func main() {
 	}
 }
 func train() {
-	agent := qlearning.NewSimpleAgent(0.7, 1.0)
+	agent := qlearning.NewSimpleAgent(0.7, 0.9)
 
 	f, err := os.OpenFile(qtableFile, os.O_CREATE|os.O_RDONLY, 0644)
 	if err != nil {
@@ -55,37 +61,47 @@ func train() {
 	f.Close()
 
 	var (
-		round        int
-		refere       = NewRefere(steps)
-		wins, looses int
+		round                  int
+		refere                 = NewRefere(steps)
+		wins, looses, minSteps int
+		runedThreads           atomic.Int32
 	)
+	minSteps = steps // initial
+
 	for round = 1; round <= rounds; round++ {
-		gm := newGame(lv, true, round)
-		refere.Reset()
+		runedThreads.Inc()
+		go func() {
+			gm := newGame(lv, true, false, round)
 
-		done := false
-		for {
-			refere.Inc()
+			done := false
+			for {
+				action := qlearning.Next(agent, gm, 0.7)
+				agent.Learn(action, refere)
 
-			action := qlearning.Next(agent, gm, 0.5)
-			agent.Learn(action, refere)
-			//gm.Draw()
-			win, st := gm.Stat()
-			if win {
-				wins++
-				done = true
-			}
-			if st >= steps {
-				looses++
-				done = true
-			}
+				win, st := gm.Stat()
+				if win {
+					wins++
+					if st < minSteps {
+						minSteps = st
+					}
+					done = true
+				}
+				if st >= steps {
+					looses++
+					done = true
+				}
 
-			gm.l("WINS:%d,LOOSE:%d, REW:%v", wins, looses, refere.Reward(action))
-			gm.Draw()
-			//time.Sleep(50 * time.Millisecond)
-			if done {
-				break
+				gm.l("WINS:%d,LOOSES:%d,minSteps:%d, REW:%v", wins, looses, minSteps, refere.Reward(action))
+				gm.Draw()
+				//time.Sleep(50 * time.Millisecond)
+				if done {
+					runedThreads.Dec()
+					return
+				}
 			}
+		}()
+		for int(runedThreads.Load()) >= threads {
+			time.Sleep(time.Microsecond)
 		}
 	}
 
@@ -102,7 +118,7 @@ func train() {
 }
 
 func playByHangs() {
-	gm := newGame(lv, true, 1)
+	gm := newGame(lv, true, true, 1)
 
 	gm.Draw()
 

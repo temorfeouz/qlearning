@@ -13,6 +13,7 @@ import (
 	"io"
 	"log"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -110,6 +111,7 @@ func Next(agent Agent, state State, epsilon float32) *StateAction {
 // SimpleAgent is an Agent implementation that stores Q-values in a
 // map of maps.
 type SimpleAgent struct {
+	m  sync.Mutex
 	q  map[string]map[string]float32
 	lr float32
 	d  float32
@@ -127,6 +129,9 @@ func NewSimpleAgent(lr, d float32) *SimpleAgent {
 
 // getActions returns the current Q-values for a given state.
 func (agent *SimpleAgent) getActions(state string) map[string]float32 {
+	agent.m.Lock()
+	defer agent.m.Unlock()
+
 	if _, ok := agent.q[state]; !ok {
 		agent.q[state] = make(map[string]float32)
 	}
@@ -150,14 +155,22 @@ func (agent *SimpleAgent) Learn(action *StateAction, reward Rewarder) {
 			maxNextVal = v
 		}
 	}
-
+	agent.m.Lock()
 	currentVal := actions[action.Action.String()]
 	actions[action.Action.String()] = currentVal + agent.lr*(reward.Reward(action)+agent.d*maxNextVal-currentVal)
+	agent.m.Unlock()
 }
 
 // Value gets the current Q-value for a State and Action.
 func (agent *SimpleAgent) Value(state State, action Action) float32 {
-	return agent.getActions(state.String())[action.String()]
+	//agent.m.Lock()
+	//defer agent.m.Unlock()
+
+	tmp := agent.getActions(state.String())
+	agent.m.Lock()
+	res := tmp[action.String()]
+	agent.m.Unlock()
+	return res
 }
 
 // String returns the current Q-value map as a printed string.

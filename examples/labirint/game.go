@@ -18,14 +18,15 @@ type game struct {
 	playerX, playerY int
 	WINX, WINY       int
 	debug            bool
+	graphic          bool
 	logBuf           strings.Builder
 
 	steps       int
 	moveHistory []gameBlock
 }
 
-func newGame(level [][]gameBlock, debug bool, round int) *game {
-	gm := &game{round: round, playerX: -1, playerY: -1, WINX: -1, WINY: -1, debug: debug, logBuf: strings.Builder{}}
+func newGame(level [][]gameBlock, debug, graphic bool, round int) *game {
+	gm := &game{round: round, playerX: -1, playerY: -1, WINX: -1, WINY: -1, debug: debug, graphic: graphic, logBuf: strings.Builder{}}
 
 	gm.level = make([][]gameBlock, len(level))
 
@@ -55,16 +56,18 @@ func newGame(level [][]gameBlock, debug bool, round int) *game {
 }
 
 func (gm *game) Draw() {
-	gm.clearScreen()
+	if gm.graphic {
+		gm.clearScreen()
 
-	for _, row := range gm.level {
-		for _, blk := range row {
-			fmt.Printf("%s", string(blk.symbol))
+		for _, row := range gm.level {
+			for _, blk := range row {
+				fmt.Printf("%s", string(blk.symbol))
+			}
+			fmt.Print("\n")
 		}
-		fmt.Print("\n")
+		fmt.Print("\033[u\033[K")
 	}
 
-	fmt.Print("\033[u\033[K")
 	log.Printf("[%d/%d] %s", gm.round, gm.steps, gm.logBuf.String())
 	gm.logBuf.Reset()
 	fmt.Print(strings.Repeat("\033[A", len(gm.level)+1)) // move the cursor up
@@ -101,6 +104,9 @@ func (gm *game) distToWin(x, y int) float64 {
 
 // Next collect all moves from current positions
 func (gm *game) Next() []qlearning.Action {
+	if gm.win {
+		return nil
+	}
 	res := make([]qlearning.Action, 0, 4)
 	res = append(res, &Step{
 		Dir:         top,
@@ -189,43 +195,39 @@ func (gm *game) LookAround() whatISee {
 type Refere struct {
 	baseScore float32
 	stepLimit int
-	counter   int
 }
 
 func NewRefere(stepLimit int) *Refere {
 	return &Refere{stepLimit: stepLimit, baseScore: 1000}
 }
-func (r *Refere) Inc() {
-	r.counter++
-}
-func (r *Refere) Reset() {
-	r.counter = 0
-}
 
 // Reward calculate effectivity of choosed steps
 func (r *Refere) Reward(action *qlearning.StateAction) float32 {
-	modifier := float32(1.0)
+	//modifier := float32(1.0)
 	if st, ok := action.Action.(*Step); ok {
 		if !st.BlockAtStep.canGoThought {
 			return r.baseScore * -1.0
-			//modifier = modifier * float32(-1)
 		}
-
-	}
-	if strings.Contains(action.State.String(), blokWIN.String()) {
-		return 10000
-		//return float32(r.baseScore) * 10.
 	}
 
-	tmp := strings.Split(action.State.String(), "~")
+	//tmp := strings.Split(action.State.String(), "~")
+	//
+	//dist, err := strconv.ParseFloat(tmp[len(tmp)-1], 64)
+	//if err != nil {
+	//	panic(err)
+	//}
 
-	dist, err := strconv.ParseFloat(tmp[len(tmp)-1], 64)
-	if err != nil {
-		panic(err)
+	gm, ok := action.State.(*game)
+	if !ok {
+		panic("cant cast state to game")
 	}
-	if r.counter >= r.stepLimit {
+	if gm.win {
+		return r.baseScore / (float32(gm.steps))
+	}
+
+	if gm.steps >= r.stepLimit {
 		return r.baseScore * -1.0
 	}
 
-	return r.baseScore * float32(dist) / (float32(r.counter) * modifier)
+	return r.baseScore / ((float32(gm.steps)) * float32(gm.distToWin(gm.playerX, gm.playerY)))
 }

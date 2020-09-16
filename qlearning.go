@@ -111,7 +111,7 @@ func Next(agent Agent, state State, epsilon float32) *StateAction {
 // SimpleAgent is an Agent implementation that stores Q-values in a
 // map of maps.
 type SimpleAgent struct {
-	m  sync.Mutex
+	m  *sync.Mutex
 	q  map[string]map[string]float32
 	lr float32
 	d  float32
@@ -121,6 +121,7 @@ type SimpleAgent struct {
 // and discount factor.
 func NewSimpleAgent(lr, d float32) *SimpleAgent {
 	return &SimpleAgent{
+		m:  &sync.Mutex{},
 		q:  make(map[string]map[string]float32),
 		d:  d,
 		lr: lr,
@@ -150,12 +151,13 @@ func (agent *SimpleAgent) Learn(action *StateAction, reward Rewarder) {
 	actions := agent.getActions(current)
 
 	maxNextVal := float32(0.0)
-	for _, v := range agent.getActions(next) {
+	arr := agent.getActions(next)
+	agent.m.Lock()
+	for _, v := range arr {
 		if v > maxNextVal {
 			maxNextVal = v
 		}
 	}
-	agent.m.Lock()
 	currentVal := actions[action.Action.String()]
 	actions[action.Action.String()] = currentVal + agent.lr*(reward.Reward(action)+agent.d*maxNextVal-currentVal)
 	agent.m.Unlock()

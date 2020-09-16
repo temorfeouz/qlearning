@@ -69,7 +69,7 @@ func (gm *game) Draw() {
 	}
 
 	log.Printf("[%d/%d] %s", gm.round, gm.steps, gm.logBuf.String())
-	gm.logBuf.Reset()
+	gm.logReset()
 	fmt.Print(strings.Repeat("\033[A", len(gm.level)+1)) // move the cursor up
 }
 func (gm *game) clearScreen() {
@@ -166,6 +166,9 @@ func (gm *game) Move(control control) {
 	gm.playerX = newx
 	gm.playerY = newy
 
+}
+func (gm *game) logReset() {
+	gm.logBuf.Reset()
 }
 func (gm *game) l(str string, args ...interface{}) {
 	if gm.debug {

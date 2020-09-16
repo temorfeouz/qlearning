@@ -71,10 +71,16 @@ func train() {
 	for round = 1; round <= rounds; round++ {
 		runedThreads.Inc()
 		go func() {
+			defer func() {
+				if err := recover(); err != nil {
+					log.Printf("PANIC %s\n", err)
+				}
+			}()
 			gm := newGame(lv, true, false, round)
 
 			done := false
 			for {
+				gm.logReset()
 				action := qlearning.Next(agent, gm, 0.1)
 				agent.Learn(action, refere)
 
@@ -95,7 +101,10 @@ func train() {
 					round = rounds
 				}
 				gm.l("WINS:%d,LOOSES:%d,minSteps:%d, REW:%v", wins, looses, minSteps, refere.Reward(action))
-				gm.Draw()
+
+				if round%1000 == 0 {
+					gm.Draw()
+				}
 				//time.Sleep(50 * time.Millisecond)
 				if done {
 					runedThreads.Dec()
@@ -104,7 +113,7 @@ func train() {
 			}
 		}()
 		for int(runedThreads.Load()) >= threads {
-			time.Sleep(time.Microsecond)
+			time.Sleep(time.Nanosecond)
 		}
 	}
 	for int(runedThreads.Load()) > 0 {

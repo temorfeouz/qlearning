@@ -22,7 +22,7 @@ type game struct {
 	logBuf           strings.Builder
 
 	steps       int
-	moveHistory []gameBlock
+	moveHistory []control
 }
 
 func newGame(level [][]gameBlock, debug, graphic bool, round int) *game {
@@ -155,7 +155,7 @@ func (gm *game) Move(control control) {
 		return
 	}
 
-	gm.moveHistory = append(gm.moveHistory, gm.getBlockFromPlayer(control))
+	gm.moveHistory = append(gm.moveHistory, control)
 	if gm.level[newx][newy].isWin {
 		gm.win = true
 	}
@@ -172,24 +172,6 @@ func (gm *game) l(str string, args ...interface{}) {
 		gm.logBuf.WriteString(fmt.Sprintf(str, args...))
 		gm.logBuf.WriteRune(',')
 	}
-}
-
-// deprecated
-type whatISee struct {
-	Right, Left, Top, Bottom gameBlock
-	DistToWin                float64
-}
-
-// deprecated
-func (gm *game) LookAround() whatISee {
-	res := whatISee{}
-	res.Top = gm.level[gm.playerX-1][gm.playerY]
-	res.Bottom = gm.level[gm.playerX+1][gm.playerY]
-	res.Left = gm.level[gm.playerX][gm.playerY-1]
-	res.Right = gm.level[gm.playerX][gm.playerY+1]
-	res.DistToWin = math.Sqrt(float64(gm.WINX*gm.WINX - gm.playerX*gm.playerX + gm.WINY*gm.WINY - gm.playerY*gm.playerY))
-	gm.l("to win:%+v", res.DistToWin)
-	return res
 }
 
 type Refere struct {

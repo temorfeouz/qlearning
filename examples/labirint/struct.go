@@ -56,6 +56,10 @@ type (
 	}
 )
 
+func (c *control) String() string {
+	return string(c.dir)
+}
+
 var (
 	left = control{
 		dir: '←',

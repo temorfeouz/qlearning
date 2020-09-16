@@ -31,7 +31,7 @@ const qtableFile = "qtable.json"
 var (
 	autoplay bool = true
 	steps    int  = 100
-	rounds   int  = 10000
+	rounds   int  = 1000000
 	threads       = runtime.NumCPU() * 2
 )
 
@@ -51,7 +51,7 @@ func main() {
 	}
 }
 func train() {
-	agent := qlearning.NewSimpleAgent(0.7, 0.9)
+	agent := qlearning.NewSimpleAgent(0.7, 0.8)
 
 	f, err := os.OpenFile(qtableFile, os.O_CREATE|os.O_RDONLY, 0644)
 	if err != nil {
@@ -75,7 +75,7 @@ func train() {
 
 			done := false
 			for {
-				action := qlearning.Next(agent, gm, 0.7)
+				action := qlearning.Next(agent, gm, 0.1)
 				agent.Learn(action, refere)
 
 				win, st := gm.Stat()
@@ -90,7 +90,10 @@ func train() {
 					looses++
 					done = true
 				}
-
+				if minSteps < 18 { // hardcode, try find better path
+					log.Printf("FIND BETTER PATH ON %d round\n", round)
+					round = rounds
+				}
 				gm.l("WINS:%d,LOOSES:%d,minSteps:%d, REW:%v", wins, looses, minSteps, refere.Reward(action))
 				gm.Draw()
 				//time.Sleep(50 * time.Millisecond)
@@ -103,6 +106,9 @@ func train() {
 		for int(runedThreads.Load()) >= threads {
 			time.Sleep(time.Microsecond)
 		}
+	}
+	for int(runedThreads.Load()) > 0 {
+		time.Sleep(time.Microsecond)
 	}
 
 	f, err = os.OpenFile("qtable.json", os.O_CREATE|os.O_WRONLY, 0644)
@@ -145,10 +151,6 @@ func playByHangs() {
 		if b[0] == 115 {
 			gm.l("move bottom")
 			gm.Move(bottom)
-		}
-		gm.LookAround()
-		if isWin, steps := gm.Stat(); isWin {
-			gm.l("WIN IN %d steps", steps)
 		}
 
 		gm.Draw()

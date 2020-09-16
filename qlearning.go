@@ -180,11 +180,17 @@ func (agent *SimpleAgent) String() string {
 	return fmt.Sprintf("%v", agent.q)
 }
 func (agent *SimpleAgent) Export(w io.Writer) {
+	agent.m.Lock()
+	defer agent.m.Unlock()
+
 	if err := json.NewEncoder(w).Encode(agent.q); err != nil {
 		log.Println(err)
 	}
 }
 func (agent *SimpleAgent) Import(r io.Reader) {
+	agent.m.Lock()
+	defer agent.m.Unlock()
+
 	if err := json.NewDecoder(r).Decode(&agent.q); err != nil {
 		log.Println(err)
 	}

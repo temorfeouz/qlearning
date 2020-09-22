@@ -76,7 +76,7 @@ func train() {
 					log.Printf("PANIC %s\n", err)
 				}
 			}()
-			gm := newGame(lv, true, false, round)
+			gm := newGame(lv, true, true, round)
 
 			done := false
 			for {
@@ -104,6 +104,7 @@ func train() {
 
 				if round%1000 == 0 {
 					gm.Draw()
+					time.Sleep(500 * time.Millisecond)
 				}
 				//time.Sleep(50 * time.Millisecond)
 				if done {

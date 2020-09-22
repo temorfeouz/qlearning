@@ -2,42 +2,42 @@ package main
 
 var (
 	wallTop = gameBlock{
-		symbol:       "¯¯¯¯¯",
+		symbol:       "▁▁",
 		isWin:        false,
 		canGoThought: false,
 	}
 	wallBot = gameBlock{
-		symbol:       "_____",
+		symbol:       "▔▔",
 		isWin:        false,
 		canGoThought: false,
 	}
 	wallLft = gameBlock{
-		symbol:       "⎸",
+		symbol:       "▊",
 		isWin:        false,
 		canGoThought: false,
 	}
 	wallRgt = gameBlock{
-		symbol:       "⎹",
+		symbol:       "▊",
 		isWin:        false,
 		canGoThought: false,
 	}
 	wallInr = gameBlock{
-		symbol:       "|",
+		symbol:       "▊░",
 		isWin:        false,
 		canGoThought: false,
 	}
 	blokEpt = gameBlock{
-		symbol:       "\t",
+		symbol:       "░░",
 		isWin:        false,
 		canGoThought: true,
 	}
 	blokPrs = gameBlock{
-		symbol:       "웃\t",
+		symbol:       "*░",
 		isWin:        false,
 		canGoThought: false,
 	}
 	blokWIN = gameBlock{
-		symbol:       "♔",
+		symbol:       "♔ ",
 		isWin:        true,
 		canGoThought: true,
 	}

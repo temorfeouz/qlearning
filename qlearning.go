@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"math/rand"
 	"sync"
 	"time"
@@ -45,7 +46,7 @@ type Action interface {
 type Rewarder interface {
 	// Reward calculates the reward value for a given action in a given
 	// state.
-	Reward(action *StateAction) float32
+	Reward(action *StateAction) float64
 }
 
 // Agent is an interface for a model's agent and is able to learn
@@ -56,7 +57,7 @@ type Agent interface {
 	Learn(*StateAction, Rewarder)
 
 	// Value returns the current Q-value for a State and Action.
-	Value(State, Action) float32
+	Value(State, Action) float64
 
 	// Return a string representation of the Agent.
 	String() string
@@ -67,11 +68,11 @@ type Agent interface {
 type StateAction struct {
 	State  State
 	Action Action
-	Value  float32
+	Value  float64
 }
 
 // NewStateAction creates a new StateAction for a State and Action.
-func NewStateAction(state State, action Action, val float32) *StateAction {
+func NewStateAction(state State, action Action, val float64) *StateAction {
 	return &StateAction{
 		State:  state,
 		Action: action,
@@ -83,14 +84,14 @@ func NewStateAction(state State, action Action, val float32) *StateAction {
 //
 // In the case of Q-value ties for a set of actions, a random
 // value is selected.
-func Next(agent Agent, state State, epsilon float32) *StateAction {
+func Next(agent Agent, state State, epsilon float64) *StateAction {
 	best := make([]*StateAction, 0)
-	bestVal := float32(0.0)
+	bestVal := float64(0.0)
 
 	for _, action := range state.Next() {
 		val := agent.Value(state, action)
 
-		if bestVal == float32(0.0) {
+		if bestVal == float64(0.0) {
 			best = append(best, NewStateAction(state, action, val))
 			bestVal = val
 		} else {
@@ -102,7 +103,7 @@ func Next(agent Agent, state State, epsilon float32) *StateAction {
 			}
 		}
 	}
-	if rand.Float32() < epsilon {
+	if rand.Float64() < epsilon {
 		return best[rand.Intn(len(best))]
 	}
 	return best[len(best)-1]
@@ -112,37 +113,57 @@ func Next(agent Agent, state State, epsilon float32) *StateAction {
 // map of maps.
 type SimpleAgent struct {
 	m  *sync.Mutex
-	q  map[string]map[string]float32
-	lr float32
-	d  float32
+	q  map[string]map[string]float64
+	lr float64
+	d  float64
 }
 
 // NewSimpleAgent creates a SimpleAgent with the provided learning rate
 // and discount factor.
-func NewSimpleAgent(lr, d float32) *SimpleAgent {
+func NewSimpleAgent(lr, d float64) *SimpleAgent {
 	return &SimpleAgent{
 		m:  &sync.Mutex{},
-		q:  make(map[string]map[string]float32),
+		q:  make(map[string]map[string]float64),
 		d:  d,
 		lr: lr,
 	}
 }
 
 // getActions returns the current Q-values for a given state.
-func (agent *SimpleAgent) getActions(state string) map[string]float32 {
+func (agent *SimpleAgent) getActions(state string) map[string]float64 {
 	agent.m.Lock()
 	defer agent.m.Unlock()
 
 	var (
-		res map[string]float32
+		res map[string]float64
 		ok  bool
 	)
 	if res, ok = agent.q[state]; !ok {
-		agent.q[state] = make(map[string]float32)
+		agent.q[state] = make(map[string]float64)
 		res = agent.q[state]
 	}
 
 	return res
+}
+
+func (a *SimpleAgent) MaximizeReward(state State) Action {
+	res, ok := a.q[state.String()]
+	if !ok {
+		return nil
+	}
+	a.searchMaxReward(0.0, res)
+	return nil
+}
+func (a *SimpleAgent) searchMaxReward(bestVal float64, data map[string]float64) (string, float64) {
+	for k, v := range data {
+		// if found position for next step, try find better way
+		res, ok := a.q[k]
+		if ok {
+			nextStr, nextReward := a.searchMaxReward(v, res)
+			_, _ = nextStr, nextReward
+		}
+	}
+	return "", 0
 }
 
 // Learn updates the existing Q-value for the given State and Action
@@ -155,7 +176,7 @@ func (agent *SimpleAgent) Learn(action *StateAction, reward Rewarder) {
 
 	actions := agent.getActions(current)
 
-	maxNextVal := float32(0.0)
+	maxNextVal := float64(0.0)
 	arr := agent.getActions(next)
 	agent.m.Lock()
 	for _, v := range arr {
@@ -164,12 +185,23 @@ func (agent *SimpleAgent) Learn(action *StateAction, reward Rewarder) {
 		}
 	}
 	currentVal := actions[action.Action.String()]
-	actions[action.Action.String()] = currentVal + agent.lr*(reward.Reward(action)+agent.d*maxNextVal-currentVal)
+	stReward := reward.Reward(action)
+	rew := currentVal + agent.lr*(stReward+agent.d*maxNextVal-currentVal)
+	if math.IsInf(rew, 1) {
+		log.Println(rew)
+	}
+	if math.IsInf(rew, -1) {
+		log.Println(rew)
+	}
+	if math.IsNaN(rew) {
+		log.Println(rew)
+	}
+	actions[action.Action.String()] = rew
 	agent.m.Unlock()
 }
 
 // Value gets the current Q-value for a State and Action.
-func (agent *SimpleAgent) Value(state State, action Action) float32 {
+func (agent *SimpleAgent) Value(state State, action Action) float64 {
 	//agent.m.Lock()
 	//defer agent.m.Unlock()
 
@@ -189,7 +221,9 @@ func (agent *SimpleAgent) String() string {
 func (agent *SimpleAgent) Export(w io.Writer) {
 	agent.m.Lock()
 	defer agent.m.Unlock()
-
+	for i := 0; i < 20; i++ {
+		fmt.Println(".")
+	}
 	if err := json.NewEncoder(w).Encode(agent.q); err != nil {
 		log.Println(err)
 	}

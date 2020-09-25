@@ -81,15 +81,17 @@ func (gm *game) clearScreen() {
 }
 
 func (gm *game) String() string {
+	res := strconv.Itoa(gm.playerX) + ":" + strconv.Itoa(gm.playerY)
+	return res
 	buf := strings.Builder{}
-	if gm.win {
-		buf.WriteString(blokWIN.symbol + "~")
-	}
+	//if gm.win {
+	//	buf.WriteString(blokWIN.symbol + "~")
+	//}
 	for k := range gm.moveHistory {
 		buf.WriteString(gm.moveHistory[k].String())
-		buf.WriteString("~")
+		//buf.WriteString("~")
 	}
-	buf.WriteString("~" + strconv.FormatFloat(gm.distToWin(gm.playerX, gm.playerY), 'f', 4, 64))
+	//buf.WriteString("~" + strconv.FormatFloat(gm.distToWin(gm.playerX, gm.playerY), 'f', 4, 64))
 	return buf.String()
 }
 
@@ -109,21 +111,25 @@ func (gm *game) Next() []qlearning.Action {
 	}
 	res := make([]qlearning.Action, 0, 4)
 	res = append(res, &Step{
+		gm:          gm,
 		Dir:         top,
 		BlockAtStep: gm.getBlockFromPlayer(top),
 		DistToWin:   gm.distToWin(gm.playerX+top.x, gm.playerY+top.y),
 	})
 	res = append(res, &Step{
+		gm:          gm,
 		Dir:         bottom,
 		BlockAtStep: gm.getBlockFromPlayer(bottom),
 		DistToWin:   gm.distToWin(gm.playerX+bottom.x, gm.playerY+bottom.y),
 	})
 	res = append(res, &Step{
+		gm:          gm,
 		Dir:         left,
 		BlockAtStep: gm.getBlockFromPlayer(left),
 		DistToWin:   gm.distToWin(gm.playerX+left.x, gm.playerY+left.y),
 	})
 	res = append(res, &Step{
+		gm:          gm,
 		Dir:         right,
 		BlockAtStep: gm.getBlockFromPlayer(right),
 		DistToWin:   gm.distToWin(gm.playerX+right.x, gm.playerY+right.y),
@@ -178,7 +184,7 @@ func (gm *game) l(str string, args ...interface{}) {
 }
 
 type Refere struct {
-	baseScore float32
+	baseScore float64
 	stepLimit int
 }
 
@@ -187,7 +193,7 @@ func NewRefere(stepLimit int) *Refere {
 }
 
 // Reward calculate effectivity of choosed steps
-func (r *Refere) Reward(action *qlearning.StateAction) float32 {
+func (r *Refere) Reward(action *qlearning.StateAction) float64 {
 	if st, ok := action.Action.(*Step); ok {
 		if !st.BlockAtStep.canGoThought {
 			return r.baseScore * -1.0
@@ -199,12 +205,19 @@ func (r *Refere) Reward(action *qlearning.StateAction) float32 {
 		panic("cant cast state to game")
 	}
 	if gm.win {
-		return r.baseScore * (float32(r.stepLimit - gm.steps))
+		//return r.baseScore * (float64(r.stepLimit - gm.steps))
 	}
 
 	if gm.steps >= r.stepLimit {
 		//return r.baseScore * -1.0
 	}
-
-	return r.baseScore / (float32(gm.steps)) //* float32(gm.distToWin(gm.playerX, gm.playerY)))
+	dst := gm.distToWin(gm.playerX, gm.playerY)
+	if math.IsInf(dst, 1) {
+		fmt.Println("!")
+	}
+	ret := r.baseScore / float64(dst+1) //(float64(gm.steps)) //* float64(gm.distToWin(gm.playerX, gm.playerY)))
+	if math.IsInf(ret, 1) {
+		fmt.Println("!")
+	}
+	return ret
 }

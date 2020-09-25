@@ -51,7 +51,7 @@ func main() {
 	}
 }
 func train() {
-	agent := qlearning.NewSimpleAgent(0.7, 0.8)
+	agent := qlearning.NewSimpleAgent(0.7, 1)
 
 	f, err := os.OpenFile(qtableFile, os.O_CREATE|os.O_RDONLY, 0644)
 	if err != nil {
@@ -81,7 +81,7 @@ func train() {
 			done := false
 			for {
 				gm.logReset()
-				action := qlearning.Next(agent, gm, 0.1)
+				action := qlearning.Next(agent, gm, 0)
 				agent.Learn(action, refere)
 
 				win, st := gm.Stat()
@@ -121,7 +121,7 @@ func train() {
 		time.Sleep(time.Microsecond)
 	}
 
-	f, err = os.OpenFile("qtable.json", os.O_CREATE|os.O_WRONLY, 0644)
+	f, err = os.OpenFile("qtable.json", os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		panic(err)
 	}

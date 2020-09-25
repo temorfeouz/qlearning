@@ -188,31 +188,23 @@ func NewRefere(stepLimit int) *Refere {
 
 // Reward calculate effectivity of choosed steps
 func (r *Refere) Reward(action *qlearning.StateAction) float32 {
-	//modifier := float32(1.0)
 	if st, ok := action.Action.(*Step); ok {
 		if !st.BlockAtStep.canGoThought {
 			return r.baseScore * -1.0
 		}
 	}
 
-	//tmp := strings.Split(action.State.String(), "~")
-	//
-	//dist, err := strconv.ParseFloat(tmp[len(tmp)-1], 64)
-	//if err != nil {
-	//	panic(err)
-	//}
-
 	gm, ok := action.State.(*game)
 	if !ok {
 		panic("cant cast state to game")
 	}
 	if gm.win {
-		return r.baseScore / (float32(gm.steps))
+		return r.baseScore * (float32(r.stepLimit - gm.steps))
 	}
 
 	if gm.steps >= r.stepLimit {
-		return r.baseScore * -1.0
+		//return r.baseScore * -1.0
 	}
 
-	return r.baseScore / ((float32(gm.steps)) * float32(gm.distToWin(gm.playerX, gm.playerY)))
+	return r.baseScore / (float32(gm.steps)) //* float32(gm.distToWin(gm.playerX, gm.playerY)))
 }

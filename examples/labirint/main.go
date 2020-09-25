@@ -76,7 +76,7 @@ func train() {
 					log.Printf("PANIC %s\n", err)
 				}
 			}()
-			gm := newGame(lv, true, true, round)
+			gm := newGame(lv, true, false, round)
 
 			done := false
 			for {
@@ -96,7 +96,7 @@ func train() {
 					looses++
 					done = true
 				}
-				if minSteps < 18 { // hardcode, try find better path
+				if minSteps <= 14 { // hardcode, try find better path
 					log.Printf("FIND BETTER PATH ON %d round\n", round)
 					round = rounds
 				}
@@ -104,7 +104,7 @@ func train() {
 
 				if round%1000 == 0 {
 					gm.Draw()
-					time.Sleep(500 * time.Millisecond)
+					//time.Sleep(500 * time.Millisecond)
 				}
 				//time.Sleep(50 * time.Millisecond)
 				if done {

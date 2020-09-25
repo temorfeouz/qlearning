@@ -133,11 +133,16 @@ func (agent *SimpleAgent) getActions(state string) map[string]float32 {
 	agent.m.Lock()
 	defer agent.m.Unlock()
 
-	if _, ok := agent.q[state]; !ok {
+	var (
+		res map[string]float32
+		ok  bool
+	)
+	if res, ok = agent.q[state]; !ok {
 		agent.q[state] = make(map[string]float32)
+		res = agent.q[state]
 	}
 
-	return agent.q[state]
+	return res
 }
 
 // Learn updates the existing Q-value for the given State and Action

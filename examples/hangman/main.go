@@ -219,9 +219,9 @@ func main() {
 		agent = qlearning.NewSimpleAgent(0.7, 1.0)
 	)
 
-	f, err := os.OpenFile("qtable.json", os.O_RDONLY, 0644)
+	f, err := os.OpenFile("qtable.json", os.O_CREATE|os.O_RDONLY, 0644)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 	agent.Import(f)
 	f.Close()

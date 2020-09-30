@@ -189,7 +189,7 @@ type Refere struct {
 }
 
 func NewRefere(stepLimit int) *Refere {
-	return &Refere{stepLimit: stepLimit, baseScore: 1000}
+	return &Refere{stepLimit: stepLimit, baseScore: 1}
 }
 
 // Reward calculate effectivity of choosed steps
@@ -212,10 +212,13 @@ func (r *Refere) Reward(action *qlearning.StateAction) float64 {
 		//return r.baseScore * -1.0
 	}
 	dst := gm.distToWin(gm.playerX, gm.playerY)
+	if dst == 0 {
+		return r.baseScore
+	}
 	if math.IsInf(dst, 1) {
 		fmt.Println("!")
 	}
-	ret := r.baseScore / float64(dst+1) //(float64(gm.steps)) //* float64(gm.distToWin(gm.playerX, gm.playerY)))
+	ret := r.baseScore / float64(dst) //(float64(gm.steps)) //* float64(gm.distToWin(gm.playerX, gm.playerY)))
 	if math.IsInf(ret, 1) {
 		fmt.Println("!")
 	}

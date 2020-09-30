@@ -51,7 +51,7 @@ func main() {
 	}
 }
 func train() {
-	agent := qlearning.NewSimpleAgent(0.7, 1)
+	agent := qlearning.NewSimpleAgent(0.7, 0.8)
 
 	f, err := os.OpenFile(qtableFile, os.O_CREATE|os.O_RDONLY, 0644)
 	if err != nil {
@@ -81,7 +81,7 @@ func train() {
 			done := false
 			for {
 				gm.logReset()
-				action := qlearning.Next(agent, gm, 0)
+				action := qlearning.Next(agent, gm, 0.9)
 				agent.Learn(action, refere)
 
 				win, st := gm.Stat()

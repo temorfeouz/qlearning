@@ -172,32 +172,37 @@ func (a *SimpleAgent) searchMaxReward(bestVal float64, data map[string]float64) 
 // See https://en.wikipedia.org/wiki/Q-learning#Algorithm
 func (agent *SimpleAgent) Learn(action *StateAction, reward Rewarder) {
 	current := action.State.String()
-	next := action.Action.Apply(action.State).String()
+	nextState := action.Action.Apply(action.State).String() // TODO is need action return isdone???
+	stReward := reward.Reward(action)
 
-	actions := agent.getActions(current)
-
+	// current max for next state
 	maxNextVal := float64(0.0)
-	arr := agent.getActions(next)
+	//agent.m.Lock()
+	arr := agent.getActions(nextState)
+	actions := agent.getActions(current)
 	agent.m.Lock()
+	defer agent.m.Unlock()
 	for _, v := range arr {
 		if v > maxNextVal {
 			maxNextVal = v
 		}
 	}
+	// Update q_values
+
+	// get current state map
+
 	currentVal := actions[action.Action.String()]
-	stReward := reward.Reward(action)
-	rew := currentVal + agent.lr*(stReward+agent.d*maxNextVal-currentVal)
-	if math.IsInf(rew, 1) {
-		log.Println(rew)
+
+	tdTarget := stReward + agent.d*maxNextVal
+	tdError := tdTarget - currentVal
+	actions[action.Action.String()] += agent.lr * tdError
+	if math.IsInf(actions[action.Action.String()], 1) {
+		fmt.Printf("%+v", actions[action.Action.String()])
 	}
-	if math.IsInf(rew, -1) {
-		log.Println(rew)
-	}
-	if math.IsNaN(rew) {
-		log.Println(rew)
-	}
-	actions[action.Action.String()] = rew
-	agent.m.Unlock()
+	//rew := currentVal + agent.lr*(stReward+agent.d*maxNextVal-currentVal)
+	//
+	//actions[action.Action.String()] = rew
+
 }
 
 // Value gets the current Q-value for a State and Action.

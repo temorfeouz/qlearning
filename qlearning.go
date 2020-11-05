@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"math/rand"
 	"sync"
 	"time"
@@ -87,8 +86,8 @@ func NewStateAction(state State, action Action, val float64) *StateAction {
 func Next(agent Agent, state State, epsilon float64) *StateAction {
 	best := make([]*StateAction, 0)
 	bestVal := float64(0.0)
-
-	for _, action := range state.Next() {
+	nextes := state.Next()
+	for _, action := range nextes {
 		val := agent.Value(state, action)
 
 		if bestVal == float64(0.0) {
@@ -146,63 +145,35 @@ func (agent *SimpleAgent) getActions(state string) map[string]float64 {
 	return res
 }
 
-func (a *SimpleAgent) MaximizeReward(state State) Action {
-	res, ok := a.q[state.String()]
-	if !ok {
-		return nil
-	}
-	a.searchMaxReward(0.0, res)
-	return nil
-}
-func (a *SimpleAgent) searchMaxReward(bestVal float64, data map[string]float64) (string, float64) {
-	for k, v := range data {
-		// if found position for next step, try find better way
-		res, ok := a.q[k]
-		if ok {
-			nextStr, nextReward := a.searchMaxReward(v, res)
-			_, _ = nextStr, nextReward
-		}
-	}
-	return "", 0
-}
-
 // Learn updates the existing Q-value for the given State and Action
 // using the Rewarder.
 //
 // See https://en.wikipedia.org/wiki/Q-learning#Algorithm
 func (agent *SimpleAgent) Learn(action *StateAction, reward Rewarder) {
 	current := action.State.String()
-	nextState := action.Action.Apply(action.State).String() // TODO is need action return isdone???
-	stReward := reward.Reward(action)
+	next := action.Action.Apply(action.State).String()
 
-	// current max for next state
-	maxNextVal := float64(0.0)
-	//agent.m.Lock()
-	arr := agent.getActions(nextState)
 	actions := agent.getActions(current)
+
+	maxNextVal := float64(0.0)
+	arr := agent.getActions(next)
 	agent.m.Lock()
-	defer agent.m.Unlock()
 	for _, v := range arr {
 		if v > maxNextVal {
 			maxNextVal = v
 		}
 	}
-	// Update q_values
 
-	// get current state map
-
-	currentVal := actions[action.Action.String()]
-
-	tdTarget := stReward + agent.d*maxNextVal
-	tdError := tdTarget - currentVal
-	actions[action.Action.String()] += agent.lr * tdError
-	if math.IsInf(actions[action.Action.String()], 1) {
-		fmt.Printf("%+v", actions[action.Action.String()])
-	}
-	//rew := currentVal + agent.lr*(stReward+agent.d*maxNextVal-currentVal)
+	//actStr := action.Action.String()
 	//
-	//actions[action.Action.String()] = rew
+	//if current == "1:1" && actStr == "1:3" {
+	//	fmt.Printf("%+v", "!!!!")
+	//}
 
+	currentVal := actions[next]
+	newval := currentVal + agent.lr*(reward.Reward(action)+agent.d*maxNextVal-currentVal)
+	actions[next] = newval
+	agent.m.Unlock()
 }
 
 // Value gets the current Q-value for a State and Action.
@@ -210,9 +181,11 @@ func (agent *SimpleAgent) Value(state State, action Action) float64 {
 	//agent.m.Lock()
 	//defer agent.m.Unlock()
 
-	tmp := agent.getActions(state.String())
+	stateStr := state.String()
+	tmp := agent.getActions(stateStr)
 	agent.m.Lock()
-	res := tmp[action.String()]
+	actStr := action.String()
+	res := tmp[actStr]
 	agent.m.Unlock()
 	return res
 }

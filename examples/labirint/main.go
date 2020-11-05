@@ -81,7 +81,7 @@ func train() {
 			done := false
 			for {
 				gm.logReset()
-				action := qlearning.Next(agent, gm, 0.9)
+				action := qlearning.Next(agent, gm, 0.0)
 				agent.Learn(action, refere)
 
 				win, st := gm.Stat()

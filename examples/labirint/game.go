@@ -189,7 +189,7 @@ type Refere struct {
 }
 
 func NewRefere(stepLimit int) *Refere {
-	return &Refere{stepLimit: stepLimit, baseScore: 1}
+	return &Refere{stepLimit: stepLimit, baseScore: 0.1}
 }
 
 // Reward calculate effectivity of choosed steps
